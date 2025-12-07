@@ -9,6 +9,8 @@
 #include <iostream>
 #include <fcntl.h>
 #include <pwd.h>
+#include <grp.h>
+#include <ctime>   
 #include <regex>
 
 /**
@@ -1027,9 +1029,24 @@ std::string Commands::formatLsLongListing(const std::string& name, const struct 
     out += ((info.st_mode & S_IROTH) ? 'r' : '-');
     out += ((info.st_mode & S_IWOTH) ? 'w' : '-');
     out += ((info.st_mode & S_IXOTH) ? 'x' : '-');
+    out += " " + std::to_string(info.st_nlink);
+
+    struct passwd* pw = getpwuid(info.st_uid);
+    std::string user = pw ? pw->pw_name : std::to_string(info.st_uid);
+    out += " " + user;
+
+    struct group* gr = getgrgid(info.st_gid);
+    std::string group = gr ? gr->gr_name : std::to_string(info.st_gid);
+    out += " " + group;
 
     out += " " + std::to_string(info.st_size);
-    out += " " + name + "\n";
+
+    char timebuf[64];
+    struct tm* t = localtime(&info.st_mtime);
+    strftime(timebuf, sizeof(timebuf), "%b %d %H:%M", t);
+    out += " " + std::string(timebuf);
+
+    out += " " + name;
 
     return out;
 }
