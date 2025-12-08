@@ -564,7 +564,11 @@ CommandResult Commands::grepCommand(const std::vector<std::string>& args) {
                             out += std::to_string(lineNumber) + ":";
                         }
 
-                        out += matchedText + "\n";
+                        if (opt_v && !opt_o) {
+                            out += line + "\n";\
+                        } else {
+                            out += matchedText + "\n";
+                        }
                     }
                 }
 
@@ -605,7 +609,11 @@ CommandResult Commands::grepCommand(const std::vector<std::string>& args) {
                         out += std::to_string(lineNumber) + ":";
                     }
 
-                    out += matchedText + "\n";
+                    if (opt_v && !opt_o) {
+                        out += lineBuffer + "\n";
+                    } else {
+                        out += matchedText + "\n";
+                    }
                 }
             }
         }
