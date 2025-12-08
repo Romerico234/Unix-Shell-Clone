@@ -1046,7 +1046,7 @@ std::string Commands::formatLsLongListing(const std::string& name, const struct 
     strftime(timebuf, sizeof(timebuf), "%b %d %H:%M", t);
     out += " " + std::string(timebuf);
 
-    out += " " + name;
+    out += " " + name + "\n";
 
     return out;
 }
