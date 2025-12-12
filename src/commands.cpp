@@ -12,6 +12,8 @@
 #include <grp.h>
 #include <ctime>   
 #include <regex>
+#include <utime.h>
+#include <ctime>
 
 /**
  * @brief Display a list of all supported shell commands
@@ -273,35 +275,36 @@ CommandResult Commands::rmdirCommand(const std::vector<std::string>& args) {
 }
 
 /**
- * @brief Creates a file if it does not exit or updates an existing file's access/modification times
+ * @brief Creates a file if it does not exit or updates an existing file's access/modification time
  * @param args The file name
  * @return Status code, empty output on success or error message on failure
  */
 CommandResult Commands::touchCommand(const std::vector<std::string>& args) {
-    /**
-     * TODO: Implement optional flags
-     *        - "-a"
-     *        - "-m"
-     *        - "-t"
-     *        - "-c"
-    */
-
     if (args.empty() || args.size() > 1) {
         return {1, "", "touch: invalid arguments passed"};
     }
 
     std::string fileName = args[0];
-    
-    /**
-     * @note O_CREAT flag creates the file if it does not exist
-     * @note 0644 is the permission bits that allows read and write for the owner, and read-only for group and the public
-    */
-    int fd = open(fileName.c_str(), O_CREAT | O_WRONLY, 0644);
-    if (fd == -1) {
-        return {1, "", "touch: cannot create file '" + fileName + "': " + std::string(strerror(errno))};
+
+    struct stat st;
+    bool exists = (stat(fileName.c_str(), &st) == 0);
+
+    if (!exists) {
+        int fd = open(fileName.c_str(), O_CREAT | O_WRONLY, 0644);
+        if (fd == -1) {
+            return {1, "", "touch: cannot create file '" + fileName + "': " + strerror(errno)};
+        }
+        close(fd);
+        return {0, "", ""};
     }
 
-    close(fd); 
+    struct utimbuf newTimes;
+    newTimes.actime  = time(nullptr);  
+    newTimes.modtime = time(nullptr);  
+
+    if (utime(fileName.c_str(), &newTimes) == -1) {
+        return {1, "", "touch: failed to update timestamps for '" + fileName + "': " + strerror(errno)};
+    }
 
     return {0, "", ""};
 }
