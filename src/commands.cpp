@@ -835,7 +835,8 @@ CommandResult Commands::wcCommand(const std::vector<std::string>& args) {
 
 /**
  * @brief Creates a new directory at the specified path.
- * @param args Directory path  
+ * @param args Directories and optional -p flag  
+ * - Supports "-p" flag to recursively create each directory specified in the path
  * @return Status code, empty output on success, error message on failure
  */
 CommandResult Commands::mkdirCommand(const std::vector<std::string>& args) {
@@ -843,15 +844,49 @@ CommandResult Commands::mkdirCommand(const std::vector<std::string>& args) {
         return {1, "", "mkdir: missing directory argument"};
     }
 
-    std::string out, err;
+    bool recurse = false;
+    int idx = 0;
 
-    for (const std::string& dir : args) {
-        if (mkdir(dir.c_str(), 0755) == -1) { 
-            return {1, "", "mkdir: cannot create directory '" + dir + "': " + strerror(errno)};
+    while (idx < args.size() && args[idx][0] == '-') {
+        if (args[idx] == "-p") {
+            recurse = true;
+        } else {
+            return {1, "", "mkdir: invalid option '" + args[idx] + "'"};
+        }
+        idx++;
+    }
+
+    if (idx >= args.size()) {
+        return {1, "", "mkdir: missing directory argument"};
+    }
+
+    for (; idx < args.size(); ++idx) {
+        const std::string& path = args[idx];
+
+        if (!recurse) {
+            if (mkdir(path.c_str(), 0755) == -1) {
+                return {1, "", "mkdir: cannot create directory '" + path + "': " + std::string(strerror(errno))};
+            }
+            continue;
+        }
+
+        std::string partial;
+        for (size_t i = 0; i < path.size(); ++i) {
+            partial += path[i];
+
+            if (partial.back() != '/' && i != path.size() - 1) continue;
+
+            if (partial == "/" || partial == "//") continue;
+
+            if (mkdir(partial.c_str(), 0755) == -1) {
+                if (errno != EEXIST) {
+                    return {1, "", "mkdir: cannot create directory '" + partial + "': " + std::string(strerror(errno))};
+                }
+            }
         }
     }
 
-    return {0, out, ""};
+    return {0, "", ""};
 }
 
 /**
