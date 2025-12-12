@@ -40,7 +40,7 @@ CommandResult Commands::helpCommand(const std::vector<std::string>& args) {
         "  ls [-a] [-A] [-l] [path]                 List directory contents.\n"
         "  pwd                                      Print working directory.\n"
         "  cat <file>...                            Print file contents.\n"
-        "  mkdir <dir>                              Create directory.\n"
+        "  mkdir [-p] <dir>...                      Create (optionally, nested) directories.\n"
         "  rmdir [-p] <dir>                         Remove directory.\n"
         "  rm [-r] <path>                           Remove file or directory.\n"
         "  cp <src>... <dst>                        Copy.\n"
